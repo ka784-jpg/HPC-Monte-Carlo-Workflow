@@ -1,0 +1,6 @@
+{
+  "samples": [100, 1000, 10000, 100000],
+  "replicates": 64,
+  "master_seed": 2026,
+  "chunk_size": 10000
+}

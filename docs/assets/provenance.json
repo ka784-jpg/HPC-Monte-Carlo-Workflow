@@ -1,0 +1,15 @@
+{
+  "payload": {
+    "config": "configs/gallery.json",
+    "files_sha256": {
+      "convergence.pdf": "a0708f76f58a447ef233f7f0990bce1692d97f6735d56796fcc25fcd4cd7e6ac",
+      "convergence.png": "497b7735c88876e089dd8ed990433f2ab1b5ea398c7f3a204c997b2b5ae48fbb",
+      "summary.json": "a4848c5b621c51afdd9503906d800d90289538c6a8293e5250b49c0bb4a20b11",
+      "tasks.csv": "f03633682abf472b4897d0f1a6845d2414482f2644921751d53ffb9c26c611cb"
+    },
+    "manifest_sha256": "eba6ea1c0a4a78b42ad0fb47041b6a924da73f30a00a6ac957cd64a586a02773",
+    "matplotlib": "3.11.2",
+    "source": "Public quarter-circle Monte Carlo example in this repository"
+  },
+  "sha256": "1ee5f30781c89e2f72fe52c65d2e1a3c3a9050279d581aa5966747479fcc8672"
+}
