@@ -8,7 +8,7 @@ A small, end-to-end scientific computing workflow: define an experiment, run ind
 
 The example estimates **pi from random points in a square**. Its exact answer makes correctness and convergence easy to inspect. The simulation and workflow use only the Python standard library; Matplotlib is optional for plotting.
 
-[HPC scripts](#hpc-scripts) | [Quickstart](#quickstart) | [Example results](docs/RESULTS.md) | [Workflow design](docs/WORKFLOW.md) | [Slurm guide](docs/SLURM.md) | [CLI reference](docs/CLI.md)
+[HPC scripts](#hpc-scripts) | [Workflow diagram](#workflow-diagram) | [Quickstart](#quickstart) | [Example results](docs/RESULTS.md) | [Workflow design](docs/WORKFLOW.md) | [Slurm guide](docs/SLURM.md) | [CLI reference](docs/CLI.md)
 
 ## HPC Scripts
 
@@ -35,6 +35,34 @@ bash scripts/sleeper.sh runs/demo --job-id ARRAY_JOB_ID --interval 60 --timeout 
 ```
 
 Replace `ARRAY_JOB_ID` with the numeric ID printed by the submitter. The sleeper checks progress without submitting or cancelling jobs. [Complete cluster walkthrough, site settings, background monitoring, and recovery](docs/SLURM.md).
+
+### Workflow Diagram
+
+```mermaid
+flowchart TD
+    init["mcflow init: freeze task manifest"] --> submit["submit.sh: preflight + explicit --submit"]
+    retry["retry.sh: manual retry of unfinished IDs"] --> submit
+
+    subgraph slurmJobs["Slurm jobs"]
+        workers["monte_carlo.sbatch: worker array"]
+        collector["collect.sbatch: collection job"]
+        workers -->|"afterok: array succeeds"| collector
+    end
+
+    submit -->|"Submit array"| workers
+    submit -->|"--collect: queue dependent job"| collector
+    workers -->|"Write / resume"| files[("Checkpoints and task results")]
+    collector --> analysis["mcflow aggregate + mcflow plot"]
+    manual["collect.sh: manual collection"] --> analysis
+    files -->|"Validate every result"| analysis
+    analysis --> output["CSV, summary JSON, and PNG / PDF plots"]
+
+    workers -.->|"squeue / sacct"| sleeper["sleeper.sh: check, sleep, repeat"]
+    files -.->|"Read-only validation"| sleeper
+    sleeper --> report["Report completion, failure, or timeout"]
+```
+
+Solid arrows show execution or data flow; dashed arrows show read-only monitoring. With `--collect`, Slurm holds the collection job until the array succeeds. Alternatively, run `collect.sh` manually after the workers finish. The sleeper neither triggers collection nor retries jobs, and it does not wait for the separate collector. Retry only after the previous jobs have stopped; the original task IDs, seeds, and checkpoints are retained.
 
 ## Example Output
 
