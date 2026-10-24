@@ -8,7 +8,35 @@ A small, end-to-end scientific computing workflow: define an experiment, run ind
 
 The example estimates **pi from random points in a square**. Its exact answer makes correctness and convergence easy to inspect. The simulation and workflow use only the Python standard library; Matplotlib is optional for plotting.
 
-[Quickstart](#quickstart) | [Example results](docs/RESULTS.md) | [Workflow design](docs/WORKFLOW.md) | [Slurm guide](docs/SLURM.md) | [CLI reference](docs/CLI.md)
+[HPC scripts](#hpc-scripts) | [Quickstart](#quickstart) | [Example results](docs/RESULTS.md) | [Workflow design](docs/WORKFLOW.md) | [Slurm guide](docs/SLURM.md) | [CLI reference](docs/CLI.md)
+
+## HPC Scripts
+
+The batch files and orchestration scripts are checked in and ready to inspect:
+
+| File | Role |
+| --- | --- |
+| [slurm/monte_carlo.sbatch](slurm/monte_carlo.sbatch) | One checkpoint-aware worker per Slurm array element; explicit CPU, memory, time, and signal directives |
+| [slurm/collect.sbatch](slurm/collect.sbatch) | Validate, aggregate, and plot after the array succeeds |
+| [scripts/submit.sh](scripts/submit.sh) | Preflight, array submission, optional `afterok` collector, and job-ID receipts; dry-run by default |
+| [scripts/sleeper.sh](scripts/sleeper.sh) | Sleep/poll monitor with timeout, output validation, and optional Slurm accounting checks |
+| [scripts/retry.sh](scripts/retry.sh) | Resubmit only unfinished task IDs, retaining their original seeds; dry-run by default |
+| [scripts/preflight.sh](scripts/preflight.sh) | Check the environment, manifest, output directories, and free space |
+| [scripts/run_local.sh](scripts/run_local.sh) | Execute the same run locally, then collect and plot |
+| [scripts/collect.sh](scripts/collect.sh) | Validate and analyze an existing completed run |
+
+On a configured Slurm system, after installation and `mcflow init`:
+
+```bash
+export PYTHON="$PWD/.venv/bin/python"
+bash scripts/submit.sh runs/demo --collect           # Review; no jobs submitted
+bash scripts/submit.sh runs/demo --collect --submit  # Explicitly submit array + collector
+bash scripts/sleeper.sh runs/demo --job-id ARRAY_JOB_ID --interval 60 --timeout 86400
+```
+
+Replace `ARRAY_JOB_ID` with the numeric ID printed by the submitter. The sleeper checks progress without submitting or cancelling jobs. [Complete cluster walkthrough, site settings, background monitoring, and recovery](docs/SLURM.md).
+
+## Example Output
 
 ![Monte Carlo estimates with confidence intervals, and measured error compared with the inverse-square-root prediction](docs/assets/convergence.png)
 
@@ -58,7 +86,7 @@ Use `--workers 1` on a single-core machine. The core workflow also installs with
 | Recovery | Regenerate a Slurm array containing only unfinished task IDs |
 | Analysis | Reject incomplete/invalid collections; Wilson confidence intervals and convergence plots |
 
-The batch-script generator **never submits jobs**. Review its output and submit explicitly. See the [Slurm walkthrough](docs/SLURM.md).
+The Python batch-script generator never submits jobs. The checked-in Bash submitter also defaults to a dry run and requires `--submit` to contact Slurm. See the [Slurm walkthrough](docs/SLURM.md).
 
 ## Test It
 
@@ -66,7 +94,7 @@ The batch-script generator **never submits jobs**. Review its output and submit 
 python -m unittest discover -s tests -v
 ```
 
-Tests cover deterministic seeds, serial/parallel agreement, exact checkpoint replay, damaged records, missing outputs, duplicate locks, low disk space, atomic-write failures, statistical boundaries, and plotting. A POSIX-only test sends SIGTERM to a real worker and verifies its resumed result. CI runs on Linux and Windows with Python 3.11-3.14.
+Tests cover deterministic seeds, serial/parallel agreement, exact checkpoint replay, damaged records, missing outputs, duplicate locks, low disk space, atomic-write failures, statistical boundaries, and plotting. Linux tests execute the real Bash/batch files, use mock Slurm commands to check submission/dependencies/accounting, and test sleeper completion, failure, and timeout. A POSIX-only test sends SIGTERM to a real worker and verifies its resumed result. CI runs on Linux and Windows with Python 3.11-3.14.
 
 ## Scope
 
@@ -78,6 +106,8 @@ It is **not** a production scheduler, a distributed database, a performance benc
 
 ```text
 configs/             Small example and reproducible figure configuration
+slurm/               Checked-in Monte Carlo array and collection batch jobs
+scripts/             Submit, sleep/poll, retry, preflight, local-run, and collect wrappers
 src/mcflow/          Simulation, execution, validation, CLI, and plotting
 examples/            One-command reproduction of the documented figure
 tests/               Unit, integration, fault-injection, and rendering tests

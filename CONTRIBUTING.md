@@ -18,7 +18,7 @@ The core has no third-party runtime dependencies. Keep it that way unless a depe
 - Add a regression test for a bug fix or a focused test for new behavior.
 - Preserve deterministic task identities and exact checkpoint replay. A change to the sampling algorithm requires a new engine version and explicit compatibility documentation.
 - Do not weaken validation to accept incomplete results.
-- Do not add automatic job submission, unconditional retries, or automatic stale-lock removal.
+- Preserve explicit opt-in for job submission (`--submit`); do not add unconditional retries or automatic stale-lock removal.
 - Keep generated run directories out of Git. Documentation figures must come from the public example and include a reproducible configuration.
 - Update the CLI or workflow documentation when behavior changes.
 

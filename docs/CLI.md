@@ -2,6 +2,8 @@
 
 Use `python -m mcflow --help` or the installed `mcflow` entry point. All commands accept paths containing spaces.
 
+For actual shell and batch scripts, see [scripts/](../scripts/), [slurm/](../slurm/), and the [Slurm/sleeper walkthrough](SLURM.md). The Python CLI below is the underlying worker interface, not the only way to operate the workflow.
+
 | Command | Purpose |
 | --- | --- |
 | `init CONFIG RUN` | Validate configuration and create a fresh run directory |
